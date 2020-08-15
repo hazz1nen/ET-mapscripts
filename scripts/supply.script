@@ -805,7 +805,7 @@ cranearmz {
         }
         trigger load_2 {
                 gotomarker cranezpath2 100 wait
-                trigger cranearmx stopsound_2
+                trigger cranearmx stopsound_1
                 wait 500
                 //Move crate over fence
                 trigger cranearmx startsound_2
@@ -828,6 +828,7 @@ cranearmz {
         }
         trigger load_4 {
                 gotomarker cranezpath4 100 wait
+				trigger cranearmx stopsound_1
 		wait 500
                 //Move crane arm back
                 trigger cranearmx startsound_1
