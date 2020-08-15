@@ -8,6 +8,7 @@
 // disabled music speakers by mortis and deej Dec 2 2005
 // improved music disabling by mortis May 26 2006
 // disabled annoying alarm when truck is inside the base by arni 15.09.2006
+// edited the crane script to allow pausing while gold is being loaded to truck by hazz Jun 2019
 
 game_manager {
         spawn {
@@ -55,7 +56,6 @@ game_manager {
                         mins "0 -4 -64"
                         maxs "48 4 64"
                 }
-
                 // Game rules
                 wm_axis_respawntime        30
                 wm_allied_respawntime        20
@@ -723,7 +723,7 @@ crane_enabler {
                 accum 2 set 0                        //Controls not built
         }
 
-        trigger run        {
+        trigger run {
                 accum 1 abort_if_equal 0        //Abort if truck is not in place
                 accum 2 abort_if_equal 0        //Abort if crane controls not built
                 accum 1 set 0                        //Only do the crane routine once!
@@ -732,87 +732,14 @@ crane_enabler {
                 wm_teamvoiceannounce 0 "axis_gold_taken"
                 wm_teamvoiceannounce 1 "allies_gold_taken"
                 // *---------------------------------------------------------------------------------*
-
                 //Move crane arm under crate
                 trigger cranearmx startsound_2
                 trigger cranearmx load_1
-                trigger cranearmz load_1
                 trigger cranearmz2 load_1
-                wait 1200
-                trigger cranearmx stopsound_2
-                wait 500
-
-                //Lift crate to fence level
-                trigger cranearmx startsound_1
-                trigger goldcrate load_1
-                trigger cranearmz load_2
-                trigger cranearmz2 load_2
-                wait 2000
-                trigger cranearmx stopsound_1
-                wait 500
-
-                //Move crate over fence
-                trigger cranearmx startsound_2
-                trigger goldcrate load_2
-                trigger cranearmx load_2
-                trigger cranearmz load_3
-                trigger cranearmz2 load_3
-                wait 3500
-                trigger cranearmx stopsound_2
-                wait 500
-
-
-                //Lower crate onto truck
-                trigger cranearmx startsound_1
-                trigger goldcrate load_3
-                trigger cranearmz load_4
-                trigger cranearmz2 load_4
-                wait 1600
-                trigger cranearmx stopsound_1
-                wait 500
-
-                //Attach misc_gamemodel crate to truck, remove script_mover crate
-                trigger truckcrate attachtotruck
-            wait 100
-                trigger truckcrate_clip run_72
-                wait 100
-                setstate truckcrate_clip default
-            wait 100
-
-
-                //Move crane arm back
-                trigger cranearmx startsound_1
-                trigger cranearmz load_3
-                trigger cranearmz2 load_3
-                wait 1600
-                trigger cranearmx stopsound_1
-                wait 500
-
-                trigger cranearmx startsound_2
-                trigger cranearmz load_2
-                trigger cranearmz2 load_2
-                trigger cranearmx load_1
-
-                //Let truck continue
-                trigger truck enable_stage3
-                wm_announce "The Allies have loaded the Gold Crate onto the Truck!"
-                setstate goldcrate invisible
-            wait 100
-                wm_objective_status         4 0 2
-                wm_objective_status         4 1 1
-                wm_set_main_objective        5 0
-                wm_set_main_objective        5 1
-
-                // *----------------------------------- vo ------------------------------------------*
-                wm_teamvoiceannounce 0 "axis_gold_secured"
-                wm_teamvoiceannounce 1 "allies_gold_secured"
-                // *---------------------------------------------------------------------------------*
-
-                wait 3500
-                trigger cranearmx stopsound_2
-
-                //Remove
-                remove
+                trigger cranearmz load_1
+                // hazz - moved the rest of the trigger lines to cranearmz to take advantage of gotomarker wait
+		wait 100
+		remove
         }
 
         trigger craneready {
@@ -868,16 +795,82 @@ cranearmz {
         }
         trigger load_1 {
                 gotomarker cranezpath1 100 wait
+                trigger cranearmx stopsound_2
+                wait 500
+                //Lift crate to fence level
+                trigger cranearmx startsound_1
+                trigger goldcrate load_1
+                trigger cranearmz2 load_2
+                trigger cranearmz load_2
         }
         trigger load_2 {
                 gotomarker cranezpath2 100 wait
+                trigger cranearmx stopsound_2
+                wait 500
+                //Move crate over fence
+                trigger cranearmx startsound_2
+                trigger goldcrate load_2
+                trigger cranearmx load_2
+                trigger cranearmz2 load_3
+                trigger cranearmz load_3
+
         }
         trigger load_3 {
-                gotomarker cranezpath3 100 wait
+		gotomarker cranezpath3 100 wait
+		trigger cranearmx stopsound_2
+                wait 500
+                //Lower crate onto truck
+                trigger cranearmx startsound_1
+                trigger goldcrate load_3
+                trigger cranearmz2 load_4
+                trigger cranearmz load_4
+
         }
         trigger load_4 {
                 gotomarker cranezpath4 100 wait
+		wait 500
+                //Move crane arm back
+                trigger cranearmx startsound_1
+                trigger cranearmz2 load_3
+                //Attach misc_gamemodel crate to truck, remove script_mover crate
+                trigger truckcrate attachtotruck
+            	wait 100
+                trigger truckcrate_clip run_72
+                wait 100
+                setstate truckcrate_clip default
+            	wait 100
+
+                trigger cranearmz back_3
         }
+	trigger back_3 {
+                gotomarker cranezpath3 100 wait
+
+                trigger cranearmx stopsound_1
+		wait 500                trigger cranearmx startsound_2
+                trigger cranearmz2 load_2
+                trigger cranearmx load_1
+                trigger cranearmz back_2
+
+	}
+	trigger back_2 {
+                //Let truck continue
+                trigger truck enable_stage3
+                wm_announce "The Allies have loaded the Gold Crate onto the Truck!"
+                setstate goldcrate invisible
+
+                wm_objective_status         4 0 2
+                wm_objective_status         4 1 1
+                wm_set_main_objective        5 0
+                wm_set_main_objective        5 1
+
+                // *----------------------------------- vo ------------------------------------------*
+                wm_teamvoiceannounce 0 "axis_gold_secured"
+                wm_teamvoiceannounce 1 "allies_gold_secured"
+                // *---------------------------------------------------------------------------------*
+
+		gotomarker cranezpath2 100 wait
+		trigger cranearmx stopsound_2
+	}
 }
 
 cranearmz2 {
